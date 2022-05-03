@@ -2,7 +2,6 @@ package com.kaifengruan.social.controller;
 
 import com.kaifengruan.social.POJO.*;
 import com.kaifengruan.social.dao.*;
-import com.kaifengruan.social.repo.*;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,22 +13,16 @@ import java.util.*;
 
 @Controller
 public class HomeController {
-
     @Autowired
     UserDao userDao;
-
     @Autowired
     AdminDao adminDao;
-
     @Autowired
     CommentDao commentDao;
-
     @Autowired
     PostDao postDao;
-
     @Autowired
     ConnectDao connectDao;
-
     @Autowired
     LikeDao likeDao;
 
@@ -42,11 +35,13 @@ public class HomeController {
 
     @GetMapping("/admin")
     public ModelAndView createAdmin(HttpServletRequest request){
-        Admin admin = new Admin();
-        admin.setEmail("admin@admin.com");
-        admin.setPassword("admin");
-        admin.setUsername("admin");
-        adminDao.save(admin);
+        Admin admin = adminDao.findByEmail("admin@admin.com");
+        if( admin == null){
+            admin.setEmail("admin@admin.com");
+            admin.setPassword("admin");
+            admin.setUsername("admin");
+            adminDao.save(admin);
+        }
         request.getSession().setAttribute("admin", admin);
         List<Post> posts = postDao.findAll();
         Collections.sort(posts, (Post a, Post b)->{if(a.getPost_updated().after(b.getPost_updated())) return -1; return 1;});
@@ -337,9 +332,9 @@ public class HomeController {
         String connectId = request.getParameter("connector_id");
         Connect conn = connectDao.findByConnectorIdAndUser(connectId, user);
         if(conn != null){
-            connectDao.delete(conn.getId());
-            user.getFollows().remove(conn);
             deleteRelationship(user, connectId);
+            user.getFollows().remove(conn);
+            connectDao.delete(conn.getId());
         }
 
         List<Connect> con = connectDao.findAllByUser(user);
@@ -363,14 +358,23 @@ public class HomeController {
         User tmp = userDao.findByUserId(connector_id);
         List<Post> posts = postDao.findAllByUser(tmp);
         for(Post p : posts){
+            List<Long> commentId = new ArrayList<>();
             for(Comment cmt : p.getComments()){
                 if(cmt.getUsername().equals(user.getUsername())){
-                    p.getComments().remove(cmt);
-                    commentDao.delete(cmt.getId());
+                    commentId.add(cmt.getId());
                 }
             }
+            for(long cid : commentId){
+                Comment cur = commentDao.findById(cid);
+                p.getComments().remove(cur);
+                commentDao.delete(cur.getId());
+            }
+
             Like like = likeDao.findByUsernameAndPost(user.getUsername(), p);
-            if(like != null) likeDao.delete(like.getId());
+            if(like != null) {
+                p.getLikes().remove(like);
+                likeDao.delete(like.getId());
+            }
         }
     }
 

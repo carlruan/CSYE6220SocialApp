@@ -2,7 +2,6 @@ package com.kaifengruan.social.dao;
 
 import com.kaifengruan.social.POJO.Post;
 import com.kaifengruan.social.POJO.User;
-import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Component;
 

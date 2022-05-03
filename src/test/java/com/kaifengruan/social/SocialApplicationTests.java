@@ -13,12 +13,4 @@ class SocialApplicationTests {
     void contextLoads() {
     }
 
-    @Autowired
-    UserDao userDao;
-
-    @Test
-    void t(){
-        System.out.println(userDao.findByUsername("jimmy"));
-    }
-
 }

@@ -25,4 +25,14 @@ public class AdminDao extends DAO{
         commit();
         return admin;
     }
+
+    public Admin findByEmail(String email){
+        begin();
+        Query query=getSession().createQuery("FROM Admin where email=:email");
+        query.setParameter("email",email);
+        Admin admin = (Admin)query.uniqueResult();
+        commit();
+        return admin;
+    }
+
 }
